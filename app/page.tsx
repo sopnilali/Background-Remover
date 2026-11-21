@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import Uploader from "@/components/Uploader";
 import ResultView from "@/components/ResultView";
 import Progress from "@/components/Progress";
+import { removeBackground } from "@/lib/removeBg";
 
 type State =
   | { phase: "idle" }
@@ -27,14 +28,7 @@ export default function Home() {
     const originalUrl = track(URL.createObjectURL(file));
     setState({ phase: "loading", originalUrl });
     try {
-      const body = new FormData();
-      body.append("image", file);
-      const res = await fetch("/api/remove-bg", { method: "POST", body });
-      if (!res.ok) {
-        const data = await res.json().catch(() => null);
-        throw new Error(data?.error ?? "Failed to remove background.");
-      }
-      const blob = await res.blob();
+      const blob = await removeBackground(file);
       const resultUrl = track(URL.createObjectURL(blob));
       const base = file.name.replace(/\.[^.]+$/, "") || "image";
       setState({ phase: "done", originalUrl, resultUrl, name: `${base}-no-bg.png` });
