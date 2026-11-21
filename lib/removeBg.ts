@@ -1,5 +1,6 @@
 // Runs entirely in the browser (transformers.js + ONNX Runtime Web). No server needed.
-const MODEL_ID = "onnx-community/BiRefNet_lite-ONNX";
+// RMBG-1.4 (BRIA): light enough for the browser. NOTE: license is non-commercial.
+const MODEL_ID = "briaai/RMBG-1.4";
 
 type Loaded = { model: any; processor: any };
 let loading: Promise<Loaded> | null = null;
@@ -17,7 +18,14 @@ function load(onProgress?: (p: ProgressInfo) => void): Promise<Loaded> {
         hasGpu = !!(await (navigator as any).gpu?.requestAdapter());
       } catch {}
       const open = (device: string) =>
-        AutoModel.from_pretrained(MODEL_ID, { dtype: "fp32", device, progress_callback: onProgress } as any);
+        AutoModel.from_pretrained(MODEL_ID, {
+          // fp16 on GPU; 8-bit quantized (~44 MB) on CPU keeps memory low.
+          dtype: device === "webgpu" ? "fp16" : "q8",
+          device,
+          // Reduce peak memory: wasm has a 4 GB ceiling and 1024x1024 activations are big.
+          session_options: { enableCpuMemArena: false, enableMemPattern: false },
+          progress_callback: onProgress,
+        } as any);
       let model: any;
       try {
         model = await open(hasGpu ? "webgpu" : "wasm");
@@ -47,8 +55,8 @@ export async function removeBackground(file: File, onProgress?: (p: ProgressInfo
   const outputs = await model({ [inputName]: pixel_values });
   const out = outputs[Object.keys(outputs)[0]];
 
-  // Sigmoid -> 0..255 mask, resized back to the original size.
-  const mask = await RawImage.fromTensor(out[0].sigmoid().mul(255).to("uint8")).resize(width, height);
+  // RMBG-1.4 already outputs 0..1 probabilities -> 0..255 mask, resized to the original size.
+  const mask = await RawImage.fromTensor(out[0].mul(255).to("uint8")).resize(width, height);
 
   const canvas = document.createElement("canvas");
   canvas.width = width;
