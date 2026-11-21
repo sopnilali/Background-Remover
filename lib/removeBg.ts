@@ -11,12 +11,20 @@ function load(onProgress?: (p: ProgressInfo) => void): Promise<Loaded> {
     loading = (async () => {
       const { AutoModel, AutoProcessor, env } = await import("@huggingface/transformers");
       env.allowLocalModels = false;
-      const hasGpu = typeof navigator !== "undefined" && "gpu" in navigator;
-      const model = await AutoModel.from_pretrained(MODEL_ID, {
-        dtype: "fp32",
-        device: hasGpu ? "webgpu" : "wasm",
-        progress_callback: onProgress,
-      } as any);
+      // navigator.gpu can exist without a usable adapter, so verify before choosing WebGPU.
+      let hasGpu = false;
+      try {
+        hasGpu = !!(await (navigator as any).gpu?.requestAdapter());
+      } catch {}
+      const open = (device: string) =>
+        AutoModel.from_pretrained(MODEL_ID, { dtype: "fp32", device, progress_callback: onProgress } as any);
+      let model: any;
+      try {
+        model = await open(hasGpu ? "webgpu" : "wasm");
+      } catch (e) {
+        if (!hasGpu) throw e;
+        model = await open("wasm"); // WebGPU failed at load time -> CPU fallback
+      }
       const processor = await AutoProcessor.from_pretrained(MODEL_ID);
       return { model, processor };
     })().catch((e) => {
