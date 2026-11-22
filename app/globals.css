@@ -50,6 +50,33 @@ h1 { font-size: clamp(32px, 6vw, 52px); margin: 0 0 12px; text-align: center; }
 .label { position: absolute; top: 10px; padding: 4px 10px; font-size: 12px; line-height: 1.4; background: rgba(0,0,0,.55); color: #fff; border-radius: 6px; }
 .label.l { left: 10px; } .label.r { right: 10px; }
 
+.result-layout { display: flex; gap: 24px; align-items: flex-start; }
+.result-layout .compare { flex: 1 1 0; min-width: 0; max-width: none; margin: 0; }
+.bg-panel { flex: 0 0 220px; }
+.bg-panel h3 { margin: 0 0 12px; font-size: 18px; }
+.bg-panel h4 { margin: 18px 0 10px; font-size: 14px; color: #5b6570; font-weight: 600; }
+.swatches { display: flex; flex-wrap: wrap; gap: 10px; }
+.swatch {
+  width: 32px; height: 32px; border-radius: 50%; border: 2px solid #fff; padding: 0; cursor: pointer;
+  box-shadow: 0 0 0 1px #cfd5dc; position: relative; overflow: hidden;
+}
+.swatch.sel { box-shadow: 0 0 0 2px #7d2ae8; }
+.swatch.transparent {
+  background-color: #fff;
+  background-image:
+    linear-gradient(45deg, #ccc 25%, transparent 25%, transparent 75%, #ccc 75%),
+    linear-gradient(45deg, #ccc 25%, transparent 25%, transparent 75%, #ccc 75%);
+  background-size: 10px 10px; background-position: 0 0, 5px 5px;
+}
+.swatch.picker { background: conic-gradient(red, yellow, lime, aqua, blue, magenta, red); }
+.swatch.picker input { position: absolute; inset: 0; opacity: 0; width: 100%; height: 100%; cursor: pointer; }
+.btn.full { width: 100%; font-size: 14px; padding: 10px 12px; }
+.btn:disabled { opacity: 0.6; cursor: default; }
+@media (max-width: 720px) {
+  .result-layout { flex-direction: column; }
+  .bg-panel { flex: none; width: 100%; }
+}
+
 .loading { text-align: center; padding: 60px 0; }
 .spinner {
   width: 44px; height: 44px; border: 4px solid #e4d9fb; border-top-color: #7d2ae8; border-radius: 50%;
